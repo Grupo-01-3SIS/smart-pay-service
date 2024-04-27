@@ -1,0 +1,30 @@
+version: '3.7'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"  
+    environment:
+      - SERVICES=s3  
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=accesskey
+      - AWS_SECRET_ACCESS_KEY=secretkey
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEBUG=1
+      - KINESIS_ERROR_PROBABILITY=0.0
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./tools/postgres/data:/var/postgresql/data/pgdata"
+      - "./tools/postgres/scripts:/docker-entrypoint-initdb.d"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: smartpay
