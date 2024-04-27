@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	log_zap "smart-pay-service/config/log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 type S3Handler struct {
 	region string
 	client *s3.Client
+	log    *zap.Logger
 }
 
 type keys struct {
@@ -40,7 +43,7 @@ func NewBucketHandler(ctx context.Context, region string, endpoint string) (*S3H
 				return aws.Endpoint{
 					PartitionID:   "aws",
 					URL:           endpoint,
-					SigningRegion: "us-east-1",
+					SigningRegion: region,
 				}, nil
 			})),
 	)
@@ -51,23 +54,28 @@ func NewBucketHandler(ctx context.Context, region string, endpoint string) (*S3H
 	return &S3Handler{
 		region: region,
 		client: s3.NewFromConfig(cfg),
+		log:    log_zap.NewLogger().Named("layer-s3client"),
 	}, nil
-
 }
 
-func (h *S3Handler) ListObjects() {
+func (h *S3Handler) ListObjects() []string {
+	h.log.Info("List objects...")
 	output, err := h.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
 		Bucket: aws.String("smartpay"),
 	})
 
 	if err != nil {
+		h.log.Error(err.Error())
 		log.Fatal(err)
 	}
 
-	log.Println("first page results:")
+	response := make([]string, 0, len(output.Contents))
 	for _, object := range output.Contents {
-		log.Printf("key=%s size=%d", aws.ToString(object.Key), object.Size)
+		h.log.Info(fmt.Sprintf("key=%s size=%d", aws.ToString(object.Key), object.Size))
+		response = append(response, aws.ToString(object.Key))
 	}
+
+	return response
 }
 
 func getKeys() (*keys, error) {
