@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-type Budget struct {
+type CostCenterInfo struct {
 	AreaName       string
 	ExecutiveName  string
 	Email          string
