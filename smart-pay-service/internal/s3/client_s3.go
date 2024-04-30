@@ -34,6 +34,8 @@ var mesesMap = map[string]string{
 	"december":  "dezembro",
 }
 
+var Path string //Gambiarra
+
 type S3Handler struct {
 	region string
 	client *s3.Client
@@ -111,7 +113,9 @@ func (h *S3Handler) DownloadCsv(bucketName string, objectKey string, fileName st
 	defer result.Body.Close()
 
 	nameDir := strings.Split(objectKey, "/")[0]
-	existsDir, _ := afero.Exists(aferoFs, fmt.Sprintf("tools/%s", nameDir))
+	path := fmt.Sprintf("%s/%s", "tools", nameDir)
+	Path = path //Gambiarra
+	existsDir, _ := afero.Exists(aferoFs, path)
 
 	if !existsDir {
 		err = aferoFs.Mkdir(fmt.Sprintf("tools/%s", nameDir), 0755)
