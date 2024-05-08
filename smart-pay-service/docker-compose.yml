@@ -20,11 +20,13 @@ services:
   postgres:
     image: postgres:latest
     ports:
-      - "5432:5432"
+      - "5499:5432"
     volumes:
       - "./tools/postgres/data:/var/postgresql/data/pgdata"
       - "./tools/postgres/scripts:/docker-entrypoint-initdb.d"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: smartpay
+      - POSTGRES_USER=smartpay
+      - POSTGRES_PASSWORD=smartpay
+      - POSTGRES_DB=smartpay
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
