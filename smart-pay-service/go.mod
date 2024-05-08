@@ -24,6 +24,7 @@ require (
 	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/trimmer-io/go-csv v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
