@@ -83,6 +83,7 @@ func (h *S3Handler) ListObjects() []string {
 	h.log.Info("List objects...")
 	output, err := h.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
 		Bucket: aws.String("smartpay"),
+		//Prefix: aws.String("core-plataforms-abril/"),
 	})
 
 	if err != nil {
@@ -95,9 +96,8 @@ func (h *S3Handler) ListObjects() []string {
 		response = append(response, aws.ToString(object.Key))
 	}
 
-	response = currentMonthCsv(response)
 	h.log.Info(fmt.Sprintf("response List Object %v", response))
-	return response
+	return response[1:] //TODO Fazer de uma forma que ele ignore os objetos que sao diretorios
 }
 
 func (h *S3Handler) DownloadCsv(bucketName string, objectKey string, fileName string) error {
@@ -154,7 +154,6 @@ func getKeys() (*keys, error) {
 
 func currentMonthCsv(objetos []string) []string {
 	currentMonth := strings.ToLower(time.Now().Month().String())
-
 	currentMonthPortuguese, ok := mesesMap[currentMonth]
 	if !ok {
 		fmt.Println("Nome do mês não encontrado:", currentMonth)
@@ -162,12 +161,23 @@ func currentMonthCsv(objetos []string) []string {
 	}
 
 	var csvMonth []string
-	for _, objeto := range objetos {
-		dir := strings.Split(objeto, "/")[0]
 
-		if strings.HasSuffix(strings.ToLower(dir), currentMonthPortuguese) {
-			if strings.HasSuffix(strings.ToLower(objeto), ".csv") {
-				csvMonth = append(csvMonth, objeto)
+	for _, objeto := range objetos {
+		// Verifica se o objeto é um arquivo CSV
+		if strings.HasSuffix(strings.ToLower(objeto), ".csv") {
+			// Divide o caminho do objeto em partes
+			parts := strings.Split(objeto, "/")
+
+			// Verifica se o caminho do objeto tem pelo menos duas partes (diretório/pasta + arquivo)
+			if len(parts) >= 2 {
+				// Obtém o diretório/pasta do objeto (a primeira parte do caminho)
+				dir := parts[0]
+
+				// Verifica se o diretório/pasta está correto e se é o diretório do mês atual
+				if strings.ToLower(dir) == currentMonthPortuguese {
+					// Adiciona o objeto à lista de arquivos CSV do mês atual
+					csvMonth = append(csvMonth, objeto)
+				}
 			}
 		}
 	}
