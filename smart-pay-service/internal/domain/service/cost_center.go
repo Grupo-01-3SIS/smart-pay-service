@@ -17,10 +17,10 @@ import (
 var _ CostCenter = (*CostCenterService)(nil)
 
 type CostCenter interface {
-	//buscar no banco a ultima atualização
 	UnmarshalMonthlyCosts(context.Context) ([]*entity.MonthlyCosts, error)
 	UnmarshalEmployeeMonthlyCosts(context.Context) ([]*entity.EmployeeMonthlyCosts, error)
 	UnmarshalCostCenterInfo(context.Context) ([]*entity.CostCenterInfo, error)
+	RunService(context.Context) error
 }
 
 type CostCenterService struct {
@@ -33,6 +33,43 @@ func NewCostCenterService(gtw gateway.CostCenter) *CostCenterService {
 		log: log_zap.NewLogger().Named("layer-service"),
 		gtw: gtw,
 	}
+}
+
+func (cc *CostCenterService) RunService(ctx context.Context) error {
+	objCC, err := cc.UnmarshalCostCenterInfo(ctx)
+	if err != nil {
+		return err
+	}
+
+	cc.log.Info("indo para a camada do database inserir as informações do centro de custos")
+	idCC, err := cc.gtw.InsertCoastCenter(objCC)
+	if err != nil {
+		return err
+	}
+
+	objEMC, err := cc.UnmarshalEmployeeMonthlyCosts(ctx)
+	if err != nil {
+		return err
+	}
+
+	cc.log.Info("indo para a camada do database inserir as informações dos gastos dos funcionarios")
+	err = cc.gtw.InsertCoastEmployee(objEMC, idCC)
+	if err != nil {
+		return err
+	}
+
+	objMM, err := cc.UnmarshalMonthlyCosts(ctx)
+	if err != nil {
+		return err
+	}
+
+	cc.log.Info("indo para a camada do database inserir as informações dos gastos variaveis")
+	err = cc.gtw.InsertCoastVariable(objMM, idCC)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Metodo para fazer o Marshal do csv custos-mensais...csv
